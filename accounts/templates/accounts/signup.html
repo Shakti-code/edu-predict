@@ -1,0 +1,154 @@
+{% extends 'predictor/base.html' %}
+{% load static %}
+
+{% block title %}Create Account - EduPredict{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card signup-card">
+        <div class="auth-header">
+            <div class="auth-icon-wrapper">
+                <i data-lucide="user-plus"></i>
+            </div>
+            <h1>Join EduPredict</h1>
+            <p>Start your journey towards better academic performance</p>
+        </div>
+
+        <form method="post" class="auth-form" id="signup-form">
+            {% csrf_token %}
+            <input type="hidden" name="face_data" id="face_data">
+            
+            {% if form.non_field_errors %}
+            <div class="form-errors">
+                {% for error in form.non_field_errors %}
+                <p class="error-text"><i data-lucide="alert-circle"></i> {{ error }}</p>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <div class="form-grid">
+                {% for field in form %}
+                <div class="form-group">
+                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    <div class="input-wrapper">
+                        {% if 'user' in field.name or 'name' in field.name %}
+                            <i data-lucide="user" class="input-icon"></i>
+                        {% elif 'email' in field.name %}
+                            <i data-lucide="mail" class="input-icon"></i>
+                        {% elif 'password' in field.name %}
+                            <i data-lucide="key" class="input-icon"></i>
+                        {% else %}
+                            <i data-lucide="edit-3" class="input-icon"></i>
+                        {% endif %}
+                        {{ field }}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Face Capture Section -->
+            <div class="face-capture-section">
+                <p class="section-label"><i data-lucide="camera"></i> Biometric Registration</p>
+                <div class="face-preview-container">
+                    <video id="video" width="320" height="240" autoplay muted style="display: none; border-radius: 12px; transform: scaleX(-1);"></video>
+                    <div id="face-placeholder" class="face-placeholder">
+                        <i data-lucide="user"></i>
+                        <span>Click to start face capture</span>
+                    </div>
+                    <div id="capture-status" class="capture-status">
+                        <span class="status-dot"></span> <span id="status-text">Camera Idle</span>
+                    </div>
+                </div>
+                <button type="button" id="start-camera" class="btn-secondary">
+                    <i data-lucide="video"></i> Start Camera
+                </button>
+            </div>
+
+            <button type="submit" id="submit-btn" class="btn-primary auth-btn" disabled>
+                <span>Complete Registration</span>
+                <i data-lucide="rocket"></i>
+            </button>
+        </form>
+
+        <div class="auth-footer">
+            <p>Already have an account? <a href="{% url 'login' %}">Sign In</a></p>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+<script>
+    const signupForm = document.getElementById('signup-form');
+    const video = document.getElementById('video');
+    const facePlaceholder = document.getElementById('face-placeholder');
+    const startBtn = document.getElementById('start-camera');
+    const submitBtn = document.getElementById('submit-btn');
+    const faceDataInput = document.getElementById('face_data');
+    const statusText = document.getElementById('status-text');
+    const statusDot = document.querySelector('.capture-status .status-dot');
+
+    let modelsLoaded = false;
+
+    async function loadModels() {
+        statusText.innerText = "Loading AI models...";
+        // Using a reliable CDN for weights
+        const MODEL_URL = 'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@master/weights';
+        try {
+            await Promise.all([
+                faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
+                faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+                faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
+            ]);
+            modelsLoaded = true;
+            statusText.innerText = "Models Ready";
+            statusDot.style.backgroundColor = "var(--success)";
+        } catch (e) {
+            console.error("Model loading failed:", e);
+            statusText.innerText = "Model Load Error";
+        }
+    }
+
+    startBtn.addEventListener('click', async () => {
+        startBtn.disabled = true;
+        if (!modelsLoaded) await loadModels();
+        
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: {} });
+            video.srcObject = stream;
+            video.style.display = 'block';
+            facePlaceholder.style.display = 'none';
+            statusText.innerText = "Scanning face...";
+            
+            const detectionInterval = setInterval(async () => {
+                if (video.paused || video.ended) return;
+                
+                const detections = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
+                    .withFaceLandmarks()
+                    .withFaceDescriptor();
+                
+                if (detections) {
+                    clearInterval(detectionInterval);
+                    faceDataInput.value = JSON.stringify(Array.from(detections.descriptor));
+                    statusText.innerText = "Face captured!";
+                    statusDot.style.backgroundColor = "var(--success)";
+                    submitBtn.disabled = false;
+                    video.pause();
+                    stream.getTracks().forEach(track => track.stop());
+                }
+            }, 600);
+
+        } catch (err) {
+            console.error(err);
+            statusText.innerText = "Camera Error";
+            startBtn.disabled = false;
+        }
+    });
+
+    signupForm.addEventListener('submit', (e) => {
+        if (!faceDataInput.value) {
+            e.preventDefault();
+            alert("Face capture required.");
+        }
+    });
+</script>
+{% endblock %}

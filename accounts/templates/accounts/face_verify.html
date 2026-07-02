@@ -1,0 +1,151 @@
+{% extends 'predictor/base.html' %}
+{% load static %}
+
+{% block title %}Biometric Verification - EduPredict{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="auth-header">
+            <div class="auth-icon-wrapper">
+                <i data-lucide="scan"></i>
+            </div>
+            <h1>Verifying Identity</h1>
+            <p>Scanning biometric data for <strong>{{ target_user.username }}</strong></p>
+        </div>
+
+        <div class="face-preview-container">
+            <video id="video" width="320" height="240" autoplay muted style="border-radius: 12px; transform: scaleX(-1); border: 2px solid var(--glass-border);"></video>
+            <canvas id="overlay" style="position: absolute; top: 0; left: 0;"></canvas>
+            
+            <div id="scan-feedback" class="scan-feedback">
+                <div class="scanner-line"></div>
+                <div class="scan-status" id="scan-status">
+                    <span class="status-dot"></span> <span id="status-text">Initializing AI...</span>
+                </div>
+            </div>
+        </div>
+
+        <div id="result-message" style="margin-top: 20px; text-align: center; display: none;">
+            <p id="result-text" class="status-msg"></p>
+        </div>
+
+        <div class="auth-footer">
+            <p>Using EduPredict FaceID™ Security</p>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+<script>
+    const video = document.getElementById('video');
+    const statusText = document.getElementById('status-text');
+    const statusDot = document.querySelector('.scan-status .status-dot');
+    const resultMessage = document.getElementById('result-message');
+    const resultText = document.getElementById('result-text');
+
+    const savedEncoding = JSON.parse('{{ face_encoding|safe }}');
+
+    async function startVerification() {
+        const MODEL_URL = 'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@master/weights';
+        
+        try {
+            statusText.innerText = "Loading AI models...";
+            await Promise.all([
+                faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
+                faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+                faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
+            ]);
+
+            const stream = await navigator.mediaDevices.getUserMedia({ video: {} });
+            video.srcObject = stream;
+            
+            statusText.innerText = "Scanning Face...";
+            statusDot.style.backgroundColor = "var(--primary-cyan)";
+
+            const detectionInterval = setInterval(async () => {
+                const detections = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
+                    .withFaceLandmarks()
+                    .withFaceDescriptor();
+
+                if (detections) {
+                    const distance = faceapi.euclideanDistance(detections.descriptor, savedEncoding);
+                    console.log("Face distance:", distance);
+
+                    if (distance < 0.5) { // Threshold for match
+                        clearInterval(detectionInterval);
+                        statusText.innerText = "Identity Verified!";
+                        statusDot.style.backgroundColor = "var(--success)";
+                        
+                        // Send success to backend
+                        const response = await fetch(window.location.href, {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRFToken': '{{ csrf_token }}',
+                                'Content-Type': 'application/x-www-form-urlencoded',
+                            },
+                            body: 'success=true'
+                        });
+                        const data = await response.json();
+                        if (data.status === 'ok') {
+                            window.location.href = data.redirect;
+                        }
+                    } else {
+                        statusText.innerText = "Searching for match...";
+                    }
+                }
+            }, 1000);
+
+        } catch (err) {
+            console.error(err);
+            statusText.innerText = "Verification Failed";
+            statusDot.style.backgroundColor = "var(--danger)";
+        }
+    }
+
+    startVerification();
+</script>
+
+<style>
+    .face-preview-container {
+        position: relative;
+        width: 320px;
+        height: 240px;
+        margin: 0 auto;
+    }
+    .scan-feedback {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+    }
+    .scanner-line {
+        position: absolute;
+        width: 100%;
+        height: 2px;
+        background: var(--primary-cyan);
+        box-shadow: 0 0 15px var(--primary-cyan);
+        top: 0;
+        animation: scan 2s linear infinite;
+    }
+    @keyframes scan {
+        0% { top: 0; }
+        100% { top: 100%; }
+    }
+    .scan-status {
+        position: absolute;
+        bottom: 10px;
+        left: 10px;
+        background: rgba(0,0,0,0.6);
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        color: white;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+</style>
+{% endblock %}

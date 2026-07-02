@@ -1,0 +1,103 @@
+{% extends 'predictor/base.html' %}
+
+{% block title %}Prediction Results - EduPredict{% endblock %}
+
+{% block content %}
+<div class="glass-card">
+    <div class="result-header">
+        <h2 class="result-heading">Performance Prediction</h2>
+        
+        <div class="score-display">
+            <div class="score-circle">
+                <span class="score-num">{{ predicted_score }}</span>
+                <span class="score-unit">PERCENTAGE %</span>
+            </div>
+        </div>
+        
+        <div>
+            <span class="badge {{ grade_style }}">{{ grade_class }} Grade</span>
+        </div>
+    </div>
+
+    <!-- Details Section -->
+    <div class="grid-2" style="border-top: 1px solid var(--glass-border); padding-top: 32px; gap: 40px;">
+        <div>
+            <h3 class="recs-title">
+                <i data-lucide="info"></i>
+                Input Summary
+            </h3>
+            <table style="width: 100%; border-collapse: collapse; color: var(--text-secondary); font-size: 15px;">
+                <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                    <td style="padding: 12px 0; font-weight: 500;">Study Hours</td>
+                    <td style="text-align: right; color: var(--text-primary); font-weight: 600;">{{ study_hours }} hrs/day</td>
+                </tr>
+                <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                    <td style="padding: 12px 0; font-weight: 500;">Attendance Rate</td>
+                    <td style="text-align: right; color: var(--text-primary); font-weight: 600;">{{ attendance }}%</td>
+                </tr>
+                <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                    <td style="padding: 12px 0; font-weight: 500;">Sleep Hours</td>
+                    <td style="text-align: right; color: var(--text-primary); font-weight: 600;">{{ sleep_hours }} hrs/night</td>
+                </tr>
+                <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                    <td style="padding: 12px 0; font-weight: 500;">Previous Grade</td>
+                    <td style="text-align: right; color: var(--text-primary); font-weight: 600;">{{ previous_grade }}%</td>
+                </tr>
+                <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                    <td style="padding: 12px 0; font-weight: 500;">Parental Support</td>
+                    <td style="text-align: right; color: var(--text-primary); font-weight: 600;">{{ parental_support }}</td>
+                </tr>
+                <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                    <td style="padding: 12px 0; font-weight: 500;">Extracurriculars</td>
+                    <td style="text-align: right; color: var(--text-primary); font-weight: 600;">{{ extracurricular }}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 12px 0; font-weight: 500;">Internet Access</td>
+                    <td style="text-align: right; color: var(--text-primary); font-weight: 600;">{{ internet_access }}</td>
+                </tr>
+            </table>
+        </div>
+
+        <div>
+            <h3 class="recs-title">
+                <i data-lucide="trending-up"></i>
+                AI Recommendations
+            </h3>
+            
+            {% if recommendations %}
+            <div class="recs-grid">
+                {% for rec in recommendations %}
+                <div class="rec-card">
+                    <div class="rec-icon-wrapper">
+                        <i data-lucide="{{ rec.icon }}"></i>
+                    </div>
+                    <div class="rec-content">
+                        <div class="rec-category">{{ rec.category }}</div>
+                        <div class="rec-benefit">{{ rec.benefit }}</div>
+                        <div class="rec-stats">
+                            <span><i data-lucide="arrow-right-left"></i> {{ rec.current }} &rarr; {{ rec.target }}</span>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: var(--radius-md); padding: 24px; text-align: center; color: var(--text-secondary);">
+                <i data-lucide="award" style="width: 40px; height: 40px; color: var(--success); margin-bottom: 12px;"></i>
+                <p style="font-weight: 600; color: var(--text-primary);">Optimal Performance Achieved!</p>
+                <p style="font-size: 14px; margin-top: 4px;">Student is already performing exceptionally well. Encourage them to keep up the current study and lifestyle habits!</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="actions-row">
+        <a href="{% url 'index' %}" class="btn btn-secondary">
+            <i data-lucide="arrow-left"></i> Run Another Prediction
+        </a>
+        <a href="{% url 'dashboard' %}" class="btn btn-secondary" style="background: var(--gradient-glow); border-color: rgba(6,182,212,0.3); color: var(--primary-cyan);">
+            <i data-lucide="bar-chart-3"></i> View Model Dashboard
+        </a>
+    </div>
+</div>
+{% endblock %}

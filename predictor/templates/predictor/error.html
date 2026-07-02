@@ -1,0 +1,15 @@
+{% extends 'predictor/base.html' %}
+
+{% block title %}Error - EduPredict{% endblock %}
+
+{% block content %}
+<div class="glass-card error-card">
+    <i data-lucide="alert-triangle"></i>
+    <h2 class="form-title" style="margin-top: 12px; color: var(--danger); background: none; -webkit-text-fill-color: initial;">System Error</h2>
+    <p class="form-subtitle" style="margin-bottom: 24px;">{{ error }}</p>
+    
+    <a href="{% url 'index' %}" class="btn btn-secondary">
+        <i data-lucide="home"></i> Return to Homepage
+    </a>
+</div>
+{% endblock %}

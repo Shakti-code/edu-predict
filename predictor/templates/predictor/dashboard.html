@@ -1,0 +1,131 @@
+{% extends 'predictor/base.html' %}
+
+{% block title %}Model Dashboard - EduPredict{% endblock %}
+
+{% block content %}
+<div class="glass-card">
+    <h1 class="form-title">AI Model Dashboard</h1>
+    <p class="form-subtitle">Overview of the machine learning model's performance, evaluation metrics, and feature importances extracted from the training process.</p>
+
+    <!-- Metrics Cards -->
+    <div class="dashboard-metrics">
+        <div class="metric-card">
+            <div class="metric-label">R² Accuracy Score</div>
+            <div class="metric-val">{{ metrics.r2_score }}</div>
+            <div class="metric-sub">Variance explained by model</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-label">Mean Absolute Error</div>
+            <div class="metric-val">{{ metrics.mae }}%</div>
+            <div class="metric-sub">Average prediction deviation</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-label">Root Mean Sq. Error</div>
+            <div class="metric-val">{{ metrics.rmse }}%</div>
+            <div class="metric-sub">Standard error of predictions</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-label">Training Dataset Size</div>
+            <div class="metric-val">{{ metrics.dataset_size }}</div>
+            <div class="metric-sub">Student records generated</div>
+        </div>
+    </div>
+
+    <!-- Feature Importance Section -->
+    <div class="importance-section">
+        <h2 class="chart-title">
+            <i data-lucide="key-round" style="color: var(--primary-cyan); vertical-align: middle; margin-right: 8px;"></i>
+            Feature Importance (What influences grades?)
+        </h2>
+        <p style="color: var(--text-secondary); font-size: 14px; margin-bottom: 24px;">
+            The Random Forest Regressor analyzes which factors contribute most heavily to predicting a student's final grade. Higher values indicate greater prediction weight.
+        </p>
+
+        <div class="importance-list">
+            {% for feature, importance in metrics.feature_importance %}
+            <div class="importance-item">
+                <div class="importance-label">
+                    {% if feature == "Study_Hours" %}Study Hours
+                    {% elif feature == "Attendance" %}Attendance Rate
+                    {% elif feature == "Sleep_Hours" %}Sleep Hours
+                    {% elif feature == "Previous_Grade" %}Previous Grade
+                    {% elif feature == "cat__Parental_Support_Medium" %}Parental Support (Medium)
+                    {% elif feature == "cat__Parental_Support_High" %}Parental Support (High)
+                    {% elif feature == "cat__Extracurricular_Yes" %}Extracurricular Activities
+                    {% elif feature == "cat__Internet_Access_Yes" %}Internet Access
+                    {% else %}{{ feature }}
+                    {% endif %}
+                </div>
+                <div class="importance-bar-container">
+                    <!-- Set standard data attribute for JS animation -->
+                    <div class="importance-bar" data-width="{{ importance }}"></div>
+                </div>
+                <div class="importance-val">{% widthratio importance 1 100 %}%</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Prediction History -->
+    <div class="history-section" style="margin-top: 56px;">
+        <h2 class="chart-title">
+            <i data-lucide="history" style="color: var(--primary-purple); vertical-align: middle; margin-right: 8px;"></i>
+            Your Recent Predictions
+        </h2>
+        
+        {% if recent_predictions %}
+        <div class="table-container">
+            <table class="history-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Study Hrs</th>
+                        <th>Attendance</th>
+                        <th>Prev. Grade</th>
+                        <th>Prediction</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for pred in recent_predictions %}
+                    <tr>
+                        <td>{{ pred.created_at|date:"M d, Y" }}</td>
+                        <td>{{ pred.study_hours }}h</td>
+                        <td>{{ pred.attendance }}%</td>
+                        <td>{{ pred.previous_grade }}%</td>
+                        <td><span class="history-score">{{ pred.predicted_score }}%</span></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-history">
+            <i data-lucide="info"></i>
+            <p>No predictions found. Try using the predictor to see your history here!</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="actions-row" style="margin-top: 48px;">
+        <a href="{% url 'index' %}" class="btn btn-secondary">
+            <i data-lucide="sliders"></i> Back to Predictor
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Animate feature importance bars on load
+    window.addEventListener('DOMContentLoaded', () => {
+        setTimeout(() => {
+            const bars = document.querySelectorAll('.importance-bar');
+            bars.forEach(bar => {
+                const importance = parseFloat(bar.getAttribute('data-width'));
+                const widthPercent = (importance * 100).toFixed(1);
+                bar.style.width = widthPercent + '%';
+            });
+        }, 150);
+    });
+</script>
+{% endblock %}

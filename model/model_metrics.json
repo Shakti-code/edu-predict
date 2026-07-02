@@ -1,0 +1,42 @@
+{
+    "r2_score": 0.9079,
+    "mae": 3.24,
+    "rmse": 4.038,
+    "feature_importance": [
+        [
+            "Previous_Grade",
+            0.8321575980054586
+        ],
+        [
+            "Study_Hours",
+            0.050804094608506475
+        ],
+        [
+            "Sleep_Hours",
+            0.049949762826339894
+        ],
+        [
+            "Attendance",
+            0.04309569860544135
+        ],
+        [
+            "Parental_Support_Low",
+            0.01064563933004473
+        ],
+        [
+            "Extracurricular_Yes",
+            0.005485869599174537
+        ],
+        [
+            "Internet_Access_Yes",
+            0.004536779514524348
+        ],
+        [
+            "Parental_Support_Medium",
+            0.0033245575105101486
+        ]
+    ],
+    "dataset_size": 1000,
+    "train_size": 800,
+    "test_size": 200
+}
