@@ -1,6 +1,20 @@
-django>=4.2
-scikit-learn
-pandas
-numpy
-joblib
-matplotlib
+# ── Core ──────────────────────────────────────────────────────────────────────
+Django==5.0.6
+scikit-learn==1.5.0
+pandas==2.2.2
+numpy==1.26.4
+joblib==1.4.2
+matplotlib==3.9.0
+
+# ── Production Server ─────────────────────────────────────────────────────────
+gunicorn==21.2.0
+
+# ── Static Files ──────────────────────────────────────────────────────────────
+whitenoise==6.7.0
+
+# ── Environment & Config ──────────────────────────────────────────────────────
+python-decouple==3.8
+
+# ── Database ──────────────────────────────────────────────────────────────────
+psycopg2-binary==2.9.9
+dj-database-url==2.2.0
