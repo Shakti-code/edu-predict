@@ -1,0 +1,57 @@
+# ── Version Control ───────────────────────────────────────────────────────────
+.git
+.github
+.gitignore
+
+# ── Python ────────────────────────────────────────────────────────────────────
+__pycache__
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info
+dist/
+build/
+.eggs/
+*.pyo
+
+# ── Virtual Environments ─────────────────────────────────────────────────────
+venv/
+env/
+.venv/
+
+# ── Environment Files ────────────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+!.env.production.example
+
+# ── Django ────────────────────────────────────────────────────────────────────
+db.sqlite3
+*.log
+staticfiles/
+media/
+
+# ── Docker ────────────────────────────────────────────────────────────────────
+docker-compose*.yml
+.dockerignore
+Dockerfile
+
+# ── IDE / OS ──────────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# ── Jupyter ───────────────────────────────────────────────────────────────────
+.ipynb_checkpoints/
+
+# ── Tests & Coverage ─────────────────────────────────────────────────────────
+htmlcov/
+.coverage
+.pytest_cache/
+
+# ── Docs & Meta ───────────────────────────────────────────────────────────────
+README.md
+LICENSE
+*.md

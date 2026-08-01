@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
-from .models import StudentPrediction
+from .models import Prediction
 import pandas as pd
 import joblib
 import json
@@ -155,9 +155,12 @@ def predict(request):
             # Run prediction
             predicted_score = float(model.predict(input_df)[0])
             predicted_score = min(100.0, max(0.0, predicted_score))
-            
+
+            grade_class, grade_style = get_grade_class(predicted_score)
+            recommendations = generate_recommendations(input_df, predicted_score)
+
             # Save to database
-            StudentPrediction.objects.create(
+            Prediction.objects.create(
                 user=request.user,
                 study_hours=study_hours,
                 attendance=attendance,
@@ -166,11 +169,10 @@ def predict(request):
                 extracurricular=extracurricular,
                 internet_access=internet_access,
                 previous_grade=previous_grade,
-                predicted_score=round(predicted_score, 1)
+                predicted_score=round(predicted_score, 1),
+                grade_class=grade_class,
+                recommendations=recommendations
             )
-            
-            grade_class, grade_style = get_grade_class(predicted_score)
-            recommendations = generate_recommendations(input_df, predicted_score)
             
             context = {
                 'study_hours': study_hours,
@@ -207,10 +209,35 @@ def dashboard(request):
                 'feature_importance': [],
                 'dataset_size': 'N/A'
             }
-            
-    recent_predictions = StudentPrediction.objects.filter(user=request.user)[:10]
-            
+
+    recent_predictions = Prediction.objects.filter(user=request.user)[:10]
+
     return render(request, 'predictor/dashboard.html', {
         'metrics': metrics,
         'recent_predictions': recent_predictions
+    })
+
+@login_required
+def prediction_history(request):
+    predictions = Prediction.objects.filter(user=request.user).order_by('-created_at')
+
+    # Calculate statistics
+    total_predictions = predictions.count()
+    if total_predictions > 0:
+        avg_score = sum(p.predicted_score for p in predictions) / total_predictions
+        grade_distribution = {
+            'Excellent': predictions.filter(grade_class='Excellent').count(),
+            'Good': predictions.filter(grade_class='Good').count(),
+            'Pass': predictions.filter(grade_class='Pass').count(),
+            'Fail': predictions.filter(grade_class='Fail').count()
+        }
+    else:
+        avg_score = 0
+        grade_distribution = {'Excellent': 0, 'Good': 0, 'Pass': 0, 'Fail': 0}
+
+    return render(request, 'predictor/history.html', {
+        'predictions': predictions,
+        'total_predictions': total_predictions,
+        'avg_score': round(avg_score, 1),
+        'grade_distribution': grade_distribution
     })
